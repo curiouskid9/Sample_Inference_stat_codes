@@ -1,0 +1,23 @@
+ods listing close;
+ods output lsmeans=lsmean
+           diffs=diff;
+Proc mixed data=qs;              
+ where avisitn gt 0;
+ by avisitn avisit;
+ class trt02pn ;             
+ model chg=base trt02pn;             
+ lsmeans trt02pn/diff cl;               
+Run;
+ods listing;
+
+data lsmean;
+   set lsmean;
+    c11=put(round(estimate,0.01),8.2);
+    c12=put(round(stderr,0.001),8.3);
+   keep avisitn avisit trt02pn c11 c12;
+run;
+
+
+/*Description in footnote*/
+  line @1 "[a] The LS mean change and standard error are from an analysis of covariance (ANCOVA) with change from baseline at Visit 7 as ";
+  line @1 "dependent variable, baseline value at Visit 7 as covariate, and treatment as fixed effect.";
