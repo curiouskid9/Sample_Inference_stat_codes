@@ -1,0 +1,47 @@
+ods listing close;
+
+%macro convergence(type=);
+proc mixed data=fads;
+where ablfl ne "Y";
+  class trtan avisitn usubjid;
+  model chg = base trtan avisitn trtan*avisitn  /ddfm=kr; 
+  Repeated AVISITn /sub= USUBJID type=&type;
+  lsmeans trtan*AVISITn/ diff cl;
+ods output convergencestatus=cnvg_&type.;
+quit;
+
+data cnvg_&type.;
+set cnvg_&type.;
+type="&type";
+run;
+
+data convergence;
+set %if &type ne un %then %do; convergence %end; cnvg_&type.;
+run;
+
+
+%mend;
+%convergence(type=un);
+%convergence(type=cs);
+
+proc sql noprint;
+select distinct type into:structure from convergence where status=0;
+%put &structure.;
+quit;
+
+
+%macro analysis;
+
+proc mixed data=fads; 
+where ablfl ne "Y";
+  class trtan avisitn usubjid;
+  model chg = base trtan avisitn trtan*avisitn  /ddfm=kr; 
+  Repeated AVISITn /sub= USUBJID type=&structure.;
+  lsmeans trtan*AVISITn/ diff cl;
+  ods output lsmeans=lsmean;
+quit;
+
+%mend analysis;
+%analysis;
+
+
